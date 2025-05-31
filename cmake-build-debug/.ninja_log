@@ -1,0 +1,15 @@
+# ninja log v5
+9	998	1748692625062284567	CMakeFiles/course_work_CV.dir/src/main.cpp.o	5f217989804d359c
+3	192	1748692941864110523	course_work_CV	27ed3c4a25d60495
+5	1524	1748694417205610026	CMakeFiles/slice_viewer.dir/src/viewer.cpp.o	69853de85506c552
+3	945	1748692877038889563	CMakeFiles/course_work_CV.dir/src/viewer.cpp.o	4e66cbad5b366606
+1	1345	1748692190153532052	CMakeFiles/course_work_CV.dir/src/volume_generator.cpp.o	3dc000bc545a5d2b
+1524	1632	1748694417321877870	slice_viewer	1b773ab6fc415312
+8	1191	1748695878773362374	CMakeFiles/course_work_CV.dir/src/main.cpp.o	5f217989804d359c
+9	1301	1748695878885897923	CMakeFiles/course_work_CV.dir/src/connectivity_checker.cpp.o	a8abd3477a64c8d7
+1301	1436	1748695879023086172	course_work_CV	b415d05fcddee1d2
+9	1105	1748696347726397038	CMakeFiles/course_work_CV.dir/src/connectivity_checker.cpp.o	a8abd3477a64c8d7
+1105	1224	1748696347848777651	course_work_CV	b415d05fcddee1d2
+3	1056	1748697423238444685	CMakeFiles/course_work_CV.dir/src/main.cpp.o	5f217989804d359c
+4	1187	1748697423371031056	CMakeFiles/course_work_CV.dir/src/connectivity_checker.cpp.o	a8abd3477a64c8d7
+1187	1308	1748697423495617174	course_work_CV	b415d05fcddee1d2

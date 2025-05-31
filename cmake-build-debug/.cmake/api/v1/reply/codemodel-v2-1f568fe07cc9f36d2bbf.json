@@ -1,0 +1,69 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "course_work_CV",
+					"targetIndexes" : 
+					[
+						0,
+						1
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "course_work_CV::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-course_work_CV-Debug-3b1816732c53a3ed4fb5.json",
+					"name" : "course_work_CV",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "slice_viewer::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-slice_viewer-Debug-844a92a74551b76dbc3a.json",
+					"name" : "slice_viewer",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/Users/egor/CLionProjects/course_work_CV/cmake-build-debug",
+		"source" : "/Users/egor/CLionProjects/course_work_CV"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 6
+	}
+}
