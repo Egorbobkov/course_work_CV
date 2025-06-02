@@ -13,17 +13,19 @@ include_directories(
         ${CMAKE_SOURCE_DIR}/include
 )
 
-# Главный исполняемый файл
+# Главный исполняемый файл (ДОБАВЛЕН viewer.cpp)
 add_executable(course_work_CV
         src/main.cpp
         src/volume_generator.cpp
         src/connectivity_checker.cpp
+        src/visualization_utils.cpp
+        src/viewer.cpp  # <- Это критически важно!
 )
 
 # Линкуем OpenCV
 target_link_libraries(course_work_CV ${OpenCV_LIBS})
 
-# Дополнительная утилита для просмотра слайсов
+# Дополнительная утилита для просмотра слайсов (если нужна отдельно)
 add_executable(slice_viewer
         src/viewer.cpp
 )

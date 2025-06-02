@@ -1,40 +1,40 @@
 #include "volume_generator.h"
-#include <iostream>
 #include "connectivity_checker.h"
+#include "viewer.h"
+#include <filesystem>
+#include <iostream>
+
+namespace fs = std::filesystem;
 
 int main() {
+    fs::create_directories("../output");
+
     VolumeGenerator gen(100, 100, 100);
-
-    auto sphere = gen.generate(ShapeType::SPHERE);
-    gen.saveSlices(sphere, "../data/slices/sphere");
-
-    auto cube = gen.generate(ShapeType::CUBE);
-    gen.saveSlices(cube, "../data/slices/cube");
-
-    auto hollow = gen.generate(ShapeType::HOLLOW_SPHERE);
-    gen.saveSlices(hollow, "../data/slices/hollow_sphere");
-
     ConnectivityChecker checker;
 
-    bool sphereConnected = checker.isFullyConnected(sphere);
-    std::cout << "Сфера " << (sphereConnected ? "связна" : "НЕ связна") << std::endl;
+    auto sphere = gen.generate(ShapeType::SPHERE);
+    auto cube = gen.generate(ShapeType::CUBE);
+    auto hollow = gen.generate(ShapeType::HOLLOW_SPHERE);
 
-    bool cubeConnected = checker.isFullyConnected(cube);
-    std::cout << "Куб " << (cubeConnected ? "связен" : "НЕ связен") << std::endl;
+    std::cout << "Результаты:\n";
+    std::cout << "Сфера: " << (checker.isFullyConnected(sphere) ? "связна" : "не связна")
+              << ", " << (!checker.hasInternalHoles(sphere) ? "нет полостей" : "есть полости") << "\n";
+    std::cout << "Куб: " << (checker.isFullyConnected(cube) ? "связен" : "не связен")
+              << ", " << (!checker.hasInternalHoles(cube) ? "нет полостей" : "есть полости") << "\n";
+    std::cout << "Пустотелая сфера: " << (checker.isFullyConnected(hollow) ? "связна" : "не связна")
+              << ", " << (checker.hasInternalHoles(hollow) ? "есть полости" : "нет полостей") << "\n";
 
-    bool hollowConnected = checker.isFullyConnected(hollow);
-    bool hollowHasHoles = checker.hasInternalHoles(hollow);
 
-    if (hollowConnected) {
-        if (hollowHasHoles) {
-            std::cout << "Пустотелая сфера связна, но с внутренними пустотами" << std::endl;
-        } else {
-            std::cout << "Пустотелая сфера связна без внутренних пустот" << std::endl;
-        }
-    } else {
-        std::cout << "Пустотелая сфера НЕ связна" << std::endl;
-    }
+    save3DProjections(sphere, "Sphere");
+    saveSliceCollage(sphere, "Sphere");
 
-    std::cout << "Генерация завершена." << std::endl;
+
+    save3DProjections(cube, "Cube");
+    saveSliceCollage(cube, "Cube");
+
+
+    save3DProjections(hollow, "Hollow_Sphere");
+    saveSliceCollage(hollow, "Hollow_Sphere");
+
     return 0;
 }

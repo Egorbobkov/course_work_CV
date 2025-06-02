@@ -1,93 +1,138 @@
-#include <opencv2/opencv.hpp>
-#include <filesystem>
-#include <vector>
-#include <string>
+#include "viewer.h"
 #include <iostream>
-#include <regex>  // для удобного парсинга цифр из имени файла
 
-namespace fs = std::filesystem;
+using namespace cv;
+using namespace std;
 
-// функция для извлечения числа из имени "slice_123.png"
-int extractSliceNumber(const std::string& filename) {
-    std::regex re("slice_(\\d+)\\.png");
-    std::smatch match;
-    if (std::regex_search(filename, match, re)) {
-        return std::stoi(match[1]);
+void save3DProjections(const vector<Mat>& volume,
+                       const string& name,
+                       bool show)
+{
+    if (volume.empty()) {
+        cerr << "Error: Empty volume for 3D projections!" << endl;
+        return;
     }
-    return -1; // если не найдено, можно вернуть -1 или другое число
-}
 
-std::vector<cv::Mat> loadSlices(const std::string& folderPath) {
-    std::vector<std::pair<std::string, cv::Mat>> temp;
+    // Создаем 3D проекции
+    Mat xy = Mat::zeros(volume[0].rows, volume[0].cols, CV_32F);
+    Mat xz = Mat::zeros(volume.size(), volume[0].cols, CV_32F);
+    Mat yz = Mat::zeros(volume.size(), volume[0].rows, CV_32F);
 
-    for (const auto& entry : fs::directory_iterator(folderPath)) {
-        if (entry.path().extension() == ".png") {
-            std::string filename = entry.path().filename().string();
-            temp.emplace_back(filename, cv::imread(entry.path().string(), cv::IMREAD_GRAYSCALE));
+    for (size_t z = 0; z < volume.size(); z++) {
+        Mat slice;
+        if (volume[z].channels() == 3) {
+            cvtColor(volume[z], slice, COLOR_BGR2GRAY);
+        } else {
+            slice = volume[z].clone();
+        }
+        slice.convertTo(slice, CV_32F, 1.0/255.0);
+
+        for (int y = 0; y < slice.rows; y++) {
+            for (int x = 0; x < slice.cols; x++) {
+                float val = slice.at<float>(y, x);
+                xy.at<float>(y, x) += val;
+                xz.at<float>(z, x) += val;
+                yz.at<float>(z, y) += val;
+            }
         }
     }
 
-    std::sort(temp.begin(), temp.end(), [](const auto& a, const auto& b) {
-        return extractSliceNumber(a.first) < extractSliceNumber(b.first);
-    });
+    normalize(xy, xy, 0, 255, NORM_MINMAX);
+    normalize(xz, xz, 0, 255, NORM_MINMAX);
+    normalize(yz, yz, 0, 255, NORM_MINMAX);
 
-    std::vector<cv::Mat> slices;
-    for (auto& p : temp) {
-        slices.push_back(p.second);
+    Mat xy8, xz8, yz8;
+    xy.convertTo(xy8, CV_8U);
+    xz.convertTo(xz8, CV_8U);
+    yz.convertTo(yz8, CV_8U);
+
+    resize(xy8, xy8, Size(300, 300));
+    resize(xz8, xz8, Size(300, 300));
+    resize(yz8, yz8, Size(300, 300));
+
+    // Собираем проекции в одну картинку
+    Mat projections;
+    vector<Mat> proj_mats = {xy8, xz8, yz8};
+    hconcat(proj_mats.data(), proj_mats.size(), projections);
+
+    // Добавляем подписи
+    putText(projections, "XY", Point(100, 320),
+            FONT_HERSHEY_SIMPLEX, 0.7, Scalar(255), 2);
+    putText(projections, "XZ", Point(400, 320),
+            FONT_HERSHEY_SIMPLEX, 0.7, Scalar(255), 2);
+    putText(projections, "YZ", Point(700, 320),
+            FONT_HERSHEY_SIMPLEX, 0.7, Scalar(255), 2);
+
+    // Сохраняем и показываем
+    string filename = "../output/" + name + "_3d.png";
+    imwrite(filename, projections);
+
+    if (show) {
+        imshow(name + " 3D Projections", projections);
+        waitKey(0);
     }
-    return slices;
 }
 
-
-cv::Mat createCollage(const std::vector<cv::Mat>& images, int imagesPerRow, int thumbWidth, int thumbHeight) {
-    int rows = (images.size() + imagesPerRow - 1) / imagesPerRow;
-
-    cv::Mat collage = cv::Mat::zeros(rows * thumbHeight, imagesPerRow * thumbWidth, CV_8UC1);
-
-    for (size_t i = 0; i < images.size(); ++i) {
-        cv::Mat resized;
-        cv::resize(images[i], resized, cv::Size(thumbWidth, thumbHeight));
-        int row = i / imagesPerRow;
-        int col = i % imagesPerRow;
-
-        resized.copyTo(collage(cv::Rect(col * thumbWidth, row * thumbHeight, thumbWidth, thumbHeight)));
-    }
-    return collage;
-}
-
-int main() {
-    std::vector<std::string> volumes = {
-            "../data/slices/sphere",
-            "../data/slices/cube",
-            "../data/slices/hollow_sphere"
-    };
-
-    int currentVolume = 0;
-    int imagesPerRow = 8;
-    int thumbWidth = 64;
-    int thumbHeight = 64;
-
-    while (true) {
-        auto slices = loadSlices(volumes[currentVolume]);
-
-        if (slices.empty()) {
-            std::cout << "Не удалось загрузить слайсы из " << volumes[currentVolume] << std::endl;
-            return 1;
-        }
-
-        cv::Mat collage = createCollage(slices, imagesPerRow, thumbWidth, thumbHeight);
-
-        cv::imshow("Slice Viewer - Volume: " + volumes[currentVolume], collage);
-        int key = cv::waitKey(0);
-
-        if (key == 27) break; // Esc — выход
-
-        if (key == 'w') { // Следующий объём
-            currentVolume = (currentVolume + 1) % volumes.size();
-        } else if (key == 's') { // Предыдущий объём
-            currentVolume = (currentVolume - 1 + volumes.size()) % volumes.size();
-        }
+void saveSliceCollage(const vector<Mat>& volume,
+                      const string& name,
+                      bool show)
+{
+    if (volume.empty()) {
+        cerr << "Error: Empty volume for slice collage!" << endl;
+        return;
     }
 
-    return 0;
+    // Подготовка слайсов
+    vector<Mat> small_slices;
+    const int thumb_size = 30; // Увеличим размер для лучшей видимости
+
+    for (const auto& slice : volume) {
+        Mat img;
+        if (slice.channels() == 3) {
+            cvtColor(slice, img, COLOR_BGR2GRAY);
+        } else {
+            img = slice.clone();
+        }
+        img.convertTo(img, CV_8U);
+
+        // Рисуем контуры (если функция доступна)
+        Mat with_contours = img.clone();
+        // with_contours = drawContoursOnSlice(img); // Раскомментировать если есть
+
+        Mat small;
+        resize(with_contours, small, Size(thumb_size, thumb_size));
+        small_slices.push_back(small);
+    }
+
+    // Создаем коллаж 10x10
+    Mat collage;
+    vector<Mat> rows;
+    const int cols = 10;
+
+    for (int i = 0; i < 10; ++i) {
+        vector<Mat> row(small_slices.begin() + i*cols,
+                        small_slices.begin() + (i+1)*cols);
+        Mat row_img;
+        hconcat(row.data(), row.size(), row_img);
+        rows.push_back(row_img);
+    }
+    vconcat(rows.data(), rows.size(), collage);
+
+    // Добавляем заголовок
+    Mat result(collage.rows + 40, collage.cols, CV_8UC3, Scalar(0));
+    putText(result, name + " Slices", Point(10, 30),
+            FONT_HERSHEY_SIMPLEX, 0.7, Scalar(255, 255, 255), 2);
+
+    Mat roi(result, Rect(0, 40, collage.cols, collage.rows));
+    cvtColor(collage, collage, COLOR_GRAY2BGR);
+    collage.copyTo(roi);
+
+    // Сохраняем и показываем
+    string filename = "../output/" + name + "_slices.png";
+    imwrite(filename, result);
+
+    if (show) {
+        imshow(name + " Slices", result);
+        waitKey(0);
+    }
 }
