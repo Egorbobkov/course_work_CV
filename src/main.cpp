@@ -1,40 +1,55 @@
 #include "volume_generator.h"
-#include "connectivity_checker.h"
-#include "viewer.h"
 #include <filesystem>
 #include <iostream>
 
 namespace fs = std::filesystem;
 
 int main() {
-    fs::create_directories("../output");
+    fs::path project_root = fs::current_path().parent_path();
+    std::string outputDir = (project_root / "data/slices").string();
+    int size = 50;
+    std::cout << "Saving slices to: " << outputDir << std::endl;
 
-    VolumeGenerator gen(100, 100, 100);
-    ConnectivityChecker checker;
+    // Куб с одной центральной порой
+    std::vector<cv::Point3i> centerHole = { {25, 25, 25} };
+    auto cube1 = VolumeGenerator::generateCube(CubeType::CubeWithCentralHole, 50, centerHole, 8);
+    VolumeGenerator::saveSlices(cube1, outputDir + "/single_hole");
 
-    auto sphere = gen.generate(ShapeType::SPHERE);
-    auto cube = gen.generate(ShapeType::CUBE);
-    auto hollow = gen.generate(ShapeType::HOLLOW_SPHERE);
+    // Куб с несколькими порами в разных местах
+    std::vector<cv::Point3i> multipleHoles = {
+            {15, 15, 15},
+            {35, 15, 15},
+            {15, 35, 15},
+            {35, 35, 15},
+            {25, 25, 35}
+    };
+    auto cube2 = VolumeGenerator::generateCube(CubeType::CubeWithMultipleHoles, 50, multipleHoles, 6);
+    VolumeGenerator::saveSlices(cube2, outputDir + "/multiple_holes");
 
-    std::cout << "Результаты:\n";
-    std::cout << "Сфера: " << (checker.isFullyConnected(sphere) ? "связна" : "не связна")
-              << ", " << (!checker.hasInternalHoles(sphere) ? "нет полостей" : "есть полости") << "\n";
-    std::cout << "Куб: " << (checker.isFullyConnected(cube) ? "связен" : "не связен")
-              << ", " << (!checker.hasInternalHoles(cube) ? "нет полостей" : "есть полости") << "\n";
-    std::cout << "Пустотелая сфера: " << (checker.isFullyConnected(hollow) ? "связна" : "не связна")
-              << ", " << (checker.hasInternalHoles(hollow) ? "есть полости" : "нет полостей") << "\n";
+    auto cubeWithStone = VolumeGenerator::generateCube(
+            CubeType::CubeWithHangingStone, 50, {}, 7); // 7 — радиус внешней поры
+
+    VolumeGenerator::saveSlices(cubeWithStone, outputDir + "/hanging_stone");
+
+    auto disconnected = VolumeGenerator::generateCube(
+            CubeType::CubeWithDisconnectedBodies, 50);
+
+    VolumeGenerator::saveSlices(disconnected, outputDir + "/disconnected_bodies");
+
+    auto noisy = VolumeGenerator::generateCube(CubeType::CubeWithNoise, 50);
 
 
-    save3DProjections(sphere, "Sphere");
-    saveSliceCollage(sphere, "Sphere");
+    VolumeGenerator::saveSlices(noisy, outputDir + "/cube_noise");
+
+    auto solidCube = VolumeGenerator::generateCube(CubeType::SolidCube, size, {}, 0);
+    VolumeGenerator::saveSlices(solidCube, outputDir + "/solid_cube");
+
+    auto cubeWithThinBridge = VolumeGenerator::generateCube(
+            CubeType::CubeWithThinBridge, 50, {}, 0);
+    VolumeGenerator::saveSlices(cubeWithThinBridge, outputDir + "/thin_bridge");
 
 
-    save3DProjections(cube, "Cube");
-    saveSliceCollage(cube, "Cube");
 
-
-    save3DProjections(hollow, "Hollow_Sphere");
-    saveSliceCollage(hollow, "Hollow_Sphere");
-
+    std::cout << "Два куба с порами сохранены!" << std::endl;
     return 0;
 }

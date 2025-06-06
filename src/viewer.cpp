@@ -95,7 +95,6 @@ void saveSliceCollage(const vector<Mat>& volume,
         }
         img.convertTo(img, CV_8U);
 
-        // Рисуем контуры (если функция доступна)
         Mat with_contours = img.clone();
         // with_contours = drawContoursOnSlice(img); // Раскомментировать если есть
 
@@ -104,7 +103,6 @@ void saveSliceCollage(const vector<Mat>& volume,
         small_slices.push_back(small);
     }
 
-    // Создаем коллаж 10x10
     Mat collage;
     vector<Mat> rows;
     const int cols = 10;
@@ -118,7 +116,6 @@ void saveSliceCollage(const vector<Mat>& volume,
     }
     vconcat(rows.data(), rows.size(), collage);
 
-    // Добавляем заголовок
     Mat result(collage.rows + 40, collage.cols, CV_8UC3, Scalar(0));
     putText(result, name + " Slices", Point(10, 30),
             FONT_HERSHEY_SIMPLEX, 0.7, Scalar(255, 255, 255), 2);
@@ -127,7 +124,6 @@ void saveSliceCollage(const vector<Mat>& volume,
     cvtColor(collage, collage, COLOR_GRAY2BGR);
     collage.copyTo(roi);
 
-    // Сохраняем и показываем
     string filename = "../output/" + name + "_slices.png";
     imwrite(filename, result);
 

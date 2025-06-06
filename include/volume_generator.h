@@ -1,26 +1,27 @@
 #pragma once
-#include <opencv2/opencv.hpp>
+
 #include <vector>
 #include <string>
+#include <opencv2/opencv.hpp>
 
-enum class ShapeType {
-    SPHERE,
-    CUBE,
-    HOLLOW_SPHERE
+enum class CubeType {
+    CubeWithCentralHole,
+    CubeWithMultipleHoles,
+    CubeWithHangingStone,
+    CubeWithDisconnectedBodies,
+    CubeWithNoise,
+    SolidCube,
+    CubeWithThinBridge
 };
 
 class VolumeGenerator {
 public:
-    VolumeGenerator(int width, int height, int depth);
+    static std::vector<cv::Mat> generateCube(
+            CubeType type,
+            int size = 50,
+            const std::vector<cv::Point3i>& holeCenters = {},
+            int holeRadius = 5);
 
-    std::vector<cv::Mat> generate(ShapeType type);
-
-    void saveSlices(const std::vector<cv::Mat>& slices, const std::string& folderPath);
-
-private:
-    int width_, height_, depth_;
-
-    std::vector<cv::Mat> generateSphere();
-    std::vector<cv::Mat> generateCube();
-    std::vector<cv::Mat> generateHollowSphere();
+    // Сохранение срезов в указанную папку
+    static bool saveSlices(const std::vector<cv::Mat>& slices, const std::string& folder);
 };

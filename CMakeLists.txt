@@ -24,9 +24,3 @@ add_executable(course_work_CV
 
 # Линкуем OpenCV
 target_link_libraries(course_work_CV ${OpenCV_LIBS})
-
-# Дополнительная утилита для просмотра слайсов (если нужна отдельно)
-add_executable(slice_viewer
-        src/viewer.cpp
-)
-target_link_libraries(slice_viewer ${OpenCV_LIBS})
