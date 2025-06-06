@@ -1,17 +1,7 @@
 # ninja log v5
-6	929	1748907363813702631	CMakeFiles/course_work_CV.dir/src/main.cpp.o	5f217989804d359c
-3	945	1748692877038889563	CMakeFiles/course_work_CV.dir/src/viewer.cpp.o	4e66cbad5b366606
-1	1345	1748692190153532052	CMakeFiles/course_work_CV.dir/src/volume_generator.cpp.o	3dc000bc545a5d2b
-1524	1632	1748694417321877870	slice_viewer	1b773ab6fc415312
-1505	1624	1748906479533271567	course_work_CV	d70f4b1ebd9a3825
-5	1524	1748694417205610026	CMakeFiles/slice_viewer.dir/src/viewer.cpp.o	69853de85506c552
-3	1213	1748904119850927104	CMakeFiles/course_work_CV.dir/src/connectivity_checker.cpp.o	a8abd3477a64c8d7
-3	1172	1748903157244926808	CMakeFiles/course_work_CV.dir/src/visualization_utils.cpp.o	d0462438fc7c777f
-7	991	1748907515404856318	CMakeFiles/course_work_CV.dir/src/viewer.cpp.o	4e66cbad5b366606
-991	1116	1748907515532571441	course_work_CV	b7e4ac9530758332
-2	1125	1748907737488013608	CMakeFiles/course_work_CV.dir/src/main.cpp.o	5f217989804d359c
-4	1138	1748907737503768445	CMakeFiles/course_work_CV.dir/src/viewer.cpp.o	4e66cbad5b366606
-1138	1255	1748907737622454525	course_work_CV	b7e4ac9530758332
-9	1029	1748907951097222777	CMakeFiles/course_work_CV.dir/src/main.cpp.o	5f217989804d359c
-9	1083	1748907951153743103	CMakeFiles/course_work_CV.dir/src/connectivity_checker.cpp.o	a8abd3477a64c8d7
-1083	1189	1748907951261798677	course_work_CV	b7e4ac9530758332
+1	1216	1749246699041325408	CMakeFiles/course_work_CV.dir/src/visualization_utils.cpp.o	d0462438fc7c777f
+1	1250	1749246699075879818	CMakeFiles/course_work_CV.dir/src/viewer.cpp.o	4e66cbad5b366606
+0	1294	1749246699119790669	CMakeFiles/course_work_CV.dir/src/main.cpp.o	5f217989804d359c
+0	1298	1749246699125848090	CMakeFiles/course_work_CV.dir/src/volume_generator.cpp.o	3dc000bc545a5d2b
+0	1319	1749246699144098018	CMakeFiles/course_work_CV.dir/src/connectivity_checker.cpp.o	a8abd3477a64c8d7
+1319	1358	1749246699188191244	course_work_CV	b7e4ac9530758332
