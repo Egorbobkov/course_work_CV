@@ -137,6 +137,16 @@ std::vector<cv::Mat> VolumeGenerator::generateCube(
         // Ничего дополнительно делать не нужно
     }
 
+    else if (type == CubeType::CubeWithZGap) {
+        // Определим, какие Z-слайсы будут пустыми (например, 24 и 25 из 50)
+        int gapStart = size / 2 - 1;  // например, 24
+        int gapEnd = size / 2;       // например, 25
+
+        for (int z = gapStart; z <= gapEnd; ++z) {
+            slices[z].setTo(0);  // делаем полностью чёрными
+        }
+    }
+
     else if (type == CubeType::CubeWithThinBridge) {
         // Заполняем весь куб белым (тело)
         for (int z = 0; z < size; ++z) {
@@ -204,6 +214,8 @@ std::vector<cv::Mat> VolumeGenerator::generateCube(
 
     return slices;
 }
+
+
 
 
 bool VolumeGenerator::saveSlices(const std::vector<cv::Mat>& slices, const std::string& folder) {

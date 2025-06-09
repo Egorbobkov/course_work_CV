@@ -13,14 +13,21 @@ include_directories(
         ${CMAKE_SOURCE_DIR}/include
 )
 
-# Главный исполняемый файл (ДОБАВЛЕН viewer.cpp)
+# Главный исполняемый файл для генерации
 add_executable(course_work_CV
         src/main.cpp
         src/volume_generator.cpp
-        src/connectivity_checker.cpp
         src/visualization_utils.cpp
-        src/viewer.cpp  # <- Это критически важно!
+        src/viewer.cpp
 )
 
-# Линкуем OpenCV
+# Отдельный исполняемый файл для анализа
+add_executable(volume_analyzer
+        src/connectivity_checker.cpp
+        src/visualization_utils.cpp
+        src/analyzer_main.cpp
+)
+
+# Линковка для обоих исполняемых файлов
 target_link_libraries(course_work_CV ${OpenCV_LIBS})
+target_link_libraries(volume_analyzer ${OpenCV_LIBS})

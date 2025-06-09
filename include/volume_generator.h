@@ -11,7 +11,8 @@ enum class CubeType {
     CubeWithDisconnectedBodies,
     CubeWithNoise,
     SolidCube,
-    CubeWithThinBridge
+    CubeWithThinBridge,
+    CubeWithZGap
 };
 
 class VolumeGenerator {

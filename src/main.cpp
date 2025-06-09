@@ -98,6 +98,11 @@ int main() {
     VolumeGenerator::saveSlices(cubeWithThinBridge, outputDir + "/thin_bridge");
     createBorderedCollage(cubeWithThinBridge, outputDir + "/collages/thin_bridge_collage.png");
 
+    auto cubeWithZGap = VolumeGenerator::generateCube(
+            CubeType::CubeWithZGap, 50, {}, 0);
+    VolumeGenerator::saveSlices(cubeWithZGap, outputDir + "/z_gap");
+    createBorderedCollage(cubeWithZGap, outputDir + "/collages/z_gap_collage.png");
+
     std::cout << "Все кубы и коллажи с границами сохранены!" << std::endl;
     return 0;
 }
