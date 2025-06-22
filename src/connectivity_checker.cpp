@@ -57,8 +57,9 @@ std::vector<cv::Mat> loadSlices(const std::string& folder) {
         slices.push_back(std::move(img));
     }
 
-    std::cout << "Loaded " << slices.size() << " slices from " << folder
-              << " (size: " << first_size << ")" << std::endl;
+    std::cout << "Загрузка " << slices.size() << " срезов из " << folder
+              << " (размер: " << first_size.height << "×" << first_size.width << ")" << std::endl;
+
     return slices;
 }
 
@@ -212,6 +213,65 @@ PorosityStats computePorosityStats(const std::vector<cv::Mat>& volume, uchar bod
 }
 
 
+void createBorderedCollageWithContours(const std::vector<cv::Mat>& slices,
+                                       const std::string& folder_name,
+                                       const std::string& project_root) {
+    const int cols = 10;
+    const int border_size = 1;
+    const int slice_size = slices[0].rows;
+
+    int rows = (slices.size() + cols - 1) / cols;
+    int collage_width = cols * (slice_size + border_size) - border_size;
+    int collage_height = rows * (slice_size + border_size) - border_size;
+
+    // 🎨 Коллаж теперь цветной (BGR)
+    cv::Mat collage = cv::Mat::ones(collage_height, collage_width, CV_8UC3) * 255;
+
+    for (size_t i = 0; i < slices.size(); ++i) {
+        int row = i / cols;
+        int col = i % cols;
+        int y = row * (slice_size + border_size);
+        int x = col * (slice_size + border_size);
+
+        // Контуры внутренних пор
+        cv::Mat binary, contours_img;
+        cv::threshold(slices[i], binary, 127, 255, cv::THRESH_BINARY_INV);
+        std::vector<std::vector<cv::Point>> contours;
+        cv::findContours(binary, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+        // Конвертируем слайс в цвет
+        cv::cvtColor(slices[i], contours_img, cv::COLOR_GRAY2BGR);
+
+        // Рисуем контуры красным
+        cv::drawContours(contours_img, contours, -1, cv::Scalar(0, 0, 255), 1);
+
+        // Вставляем в коллаж
+        cv::Rect roi(x, y, slice_size, slice_size);
+        contours_img.copyTo(collage(roi));
+
+        // Границы между слайдами (чёрные линии)
+        if (col < cols - 1) {
+            cv::line(collage,
+                     cv::Point(x + slice_size, y),
+                     cv::Point(x + slice_size, y + slice_size - 1),
+                     cv::Scalar(0, 0, 0), border_size);
+        }
+        if (row < rows - 1) {
+            cv::line(collage,
+                     cv::Point(x, y + slice_size),
+                     cv::Point(x + slice_size - 1, y + slice_size),
+                     cv::Scalar(0, 0, 0), border_size);
+        }
+    }
+
+    std::string out_dir = project_root + "/data/output/collages/";
+    fs::create_directories(out_dir);
+    std::string output_path = out_dir + folder_name + "_collage_with_contours.png";
+    cv::imwrite(output_path, collage);
+
+    std::cout << "\nКоллаж с границами пор сохранён в: " << output_path << std::endl;
+}
+
 
 void detectFloatingIslands(const std::vector<cv::Mat>& volume, uchar body_value, int min_area) {
     if (volume.empty()) return;
@@ -226,25 +286,19 @@ void detectFloatingIslands(const std::vector<cv::Mat>& volume, uchar body_value,
         for (int i = 1; i < n_components; ++i) {
             int area = stats.at<int>(i, cv::CC_STAT_AREA);
             if (area < min_area) {
-                std::cout << "Floating island detected in slice " << z
-                          << ", component " << i
-                          << ", area: " << area << " pixels" << std::endl;
+                std::cout << "Обнаружены висячие участки на срезах: " << z
+                          << ", связная область " << i
+                          << ", площадь: " << area << " пикселей" << std::endl;
             }
         }
     }
 }
 
-#include <queue>
-#include <map>
-#include <set>
-
-// Вспомогательная структура для 3D координат
 struct Vec3 {
     int z, y, x;
     Vec3(int z_, int y_, int x_) : z(z_), y(y_), x(x_) {}
 };
 
-// Проверка выхода за границы
 bool isInside(int z, int y, int x, int D, int H, int W) {
     return z >= 0 && z < D && y >= 0 && y < H && x >= 0 && x < W;
 }
@@ -254,7 +308,7 @@ void detectFloatingIslands3D(const std::vector<cv::Mat>& volume, uchar body_valu
     const int H = volume[0].rows;
     const int W = volume[0].cols;
 
-    cv::Mat1i labels(D, H * W, int(0));  // 3D разметка: по сути — [D][H][W], уплощено
+    cv::Mat1i labels(D, H * W, int(0));
     int current_label = 1;
 
     std::map<int, std::vector<Vec3>> label_voxels;
@@ -270,7 +324,6 @@ void detectFloatingIslands3D(const std::vector<cv::Mat>& volume, uchar body_valu
             for (int x = 0; x < W; ++x) {
                 int idx = y * W + x;
                 if (volume[z].at<uchar>(y, x) == body_value && labels(z, idx) == 0) {
-                    // Новый компонент
                     std::queue<Vec3> q;
                     q.emplace(z, y, x);
                     labels(z, idx) = current_label;
@@ -298,8 +351,6 @@ void detectFloatingIslands3D(const std::vector<cv::Mat>& volume, uchar body_valu
         }
     }
 
-    std::cout << "=== 3D Floating Island Detection ===" << std::endl;
-
     for (const auto& [label, voxels] : label_voxels) {
         bool touches_z0 = false;
         for (const auto& v : voxels) {
@@ -310,8 +361,8 @@ void detectFloatingIslands3D(const std::vector<cv::Mat>& volume, uchar body_valu
         }
 
         if (!touches_z0 && voxels.size() >= static_cast<size_t>(min_voxels)) {
-            std::cout << "Floating island (3D) detected: label " << label
-                      << ", volume: " << voxels.size() << " voxels" << std::endl;
+            std::cout << "Обнаружены висячие участки в объёме: " << label
+                      << " – Объём: " << voxels.size() << " вокселей" << std::endl;
         }
     }
 }
