@@ -7,6 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # OpenCV
 find_package(OpenCV REQUIRED)
 
+# nlohmann_json
+find_package(nlohmann_json REQUIRED)
+
 # Include
 include_directories(
         ${OpenCV_INCLUDE_DIRS}
@@ -19,6 +22,7 @@ add_executable(course_work_CV
         src/volume_generator.cpp
         src/visualization_utils.cpp
         src/viewer.cpp
+        src/connectivity_checker.cpp
 )
 
 # Отдельный исполняемый файл для анализа
@@ -29,5 +33,6 @@ add_executable(volume_analyzer
 )
 
 # Линковка для обоих исполняемых файлов
-target_link_libraries(course_work_CV ${OpenCV_LIBS})
-target_link_libraries(volume_analyzer ${OpenCV_LIBS})
+target_link_libraries(course_work_CV ${OpenCV_LIBS} nlohmann_json::nlohmann_json)
+
+target_link_libraries(volume_analyzer ${OpenCV_LIBS} nlohmann_json::nlohmann_json)

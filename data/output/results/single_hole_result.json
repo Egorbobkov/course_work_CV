@@ -1,0 +1,16 @@
+{
+    "single_hole": {
+        "actual": {
+            "connected": true,
+            "floating_parts": 0,
+            "internal_pores": 1,
+            "porosity": 0.016872
+        },
+        "connected_match": true,
+        "floating_parts_match": true,
+        "internal_pores_match": true,
+        "matches": true,
+        "porosity_diff": 0.0,
+        "porosity_match": true
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "hanging_stone": {
+        "actual": {
+            "connected": true,
+            "floating_parts": 1,
+            "internal_pores": 1,
+            "porosity": 0.010368
+        },
+        "connected_match": true,
+        "floating_parts_match": true,
+        "internal_pores_match": true,
+        "matches": true,
+        "porosity_diff": 0.0,
+        "porosity_match": true
+    }
+}

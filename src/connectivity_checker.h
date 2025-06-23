@@ -15,10 +15,12 @@ struct PorosityStats {
 
 PorosityStats computePorosityStats(const std::vector<cv::Mat>& volume, uchar body_value);
 void detectFloatingIslands(const std::vector<cv::Mat>& volume, uchar body_value, int min_area = 30);
-void detectFloatingIslands3D(const std::vector<cv::Mat>& volume, uchar body_value, int min_voxels = 10);
+int detectFloatingIslands3D(const std::vector<cv::Mat>& volume, uchar body_value, int min_voxels = 10);
 void createBorderedCollageWithContours(const std::vector<cv::Mat>& slices,
                                        const std::string& folder_name,
                                        const std::string& project_root);
+void compareWithReferenceMetrics(const std::string& cube_name, bool is_connected, const PorosityStats& stats, int floating3DCount);
+
 
 
 #endif

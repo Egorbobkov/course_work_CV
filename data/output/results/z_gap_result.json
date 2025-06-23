@@ -1,0 +1,16 @@
+{
+    "z_gap": {
+        "actual": {
+            "connected": false,
+            "floating_parts": 1,
+            "internal_pores": 0,
+            "porosity": 0.04
+        },
+        "connected_match": true,
+        "floating_parts_match": false,
+        "internal_pores_match": true,
+        "matches": false,
+        "porosity_diff": 0.0,
+        "porosity_match": true
+    }
+}

@@ -33,21 +33,19 @@ int main(int argc, char** argv) {
 
     std::cout << "\nСохранение визуализации пор..." << std::endl;
 
-// Получаем имя папки (последний элемент пути)
     std::string folder_name = std::filesystem::path(folder).filename().string();
-
-// Корень проекта (один уровень выше build-папки)
     std::string project_root = std::filesystem::current_path().parent_path().string();
 
-// Сохраняем коллаж
     createBorderedCollageWithContours(slices, folder_name, project_root);
-
 
     std::cout << "\nПоиск висячих компонентов на 2D-срезах:" << std::endl;
     detectFloatingIslands(slices, body_value);
 
     std::cout << "\nПоиск висячих компонентов в 3D:" << std::endl;
-    detectFloatingIslands3D(slices, body_value);
+    int floating_3d_count = detectFloatingIslands3D(slices, body_value);
+
+    // Добавляем вызов сравнения с эталонными метриками
+    compareWithReferenceMetrics(folder_name, connected, stats, floating_3d_count);
 
     std::cout << "\nАнализ завершён." << std::endl;
     return 0;

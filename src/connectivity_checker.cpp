@@ -6,7 +6,8 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <map>
-#include <set>
+#include <nlohmann/json.hpp>
+#include <fstream>
 
 namespace fs = std::filesystem;
 
@@ -224,8 +225,10 @@ void createBorderedCollageWithContours(const std::vector<cv::Mat>& slices,
     int collage_width = cols * (slice_size + border_size) - border_size;
     int collage_height = rows * (slice_size + border_size) - border_size;
 
-    // 🎨 Коллаж теперь цветной (BGR)
+    // Цветной коллаж (BGR)
     cv::Mat collage = cv::Mat::ones(collage_height, collage_width, CV_8UC3) * 255;
+
+    bool is_disconnected_case = folder_name.find("disconnected") != std::string::npos;
 
     for (size_t i = 0; i < slices.size(); ++i) {
         int row = i / cols;
@@ -233,23 +236,29 @@ void createBorderedCollageWithContours(const std::vector<cv::Mat>& slices,
         int y = row * (slice_size + border_size);
         int x = col * (slice_size + border_size);
 
-        // Контуры внутренних пор
-        cv::Mat binary, contours_img;
-        cv::threshold(slices[i], binary, 127, 255, cv::THRESH_BINARY_INV);
-        std::vector<std::vector<cv::Point>> contours;
-        cv::findContours(binary, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-
-        // Конвертируем слайс в цвет
+        cv::Mat contours_img;
         cv::cvtColor(slices[i], contours_img, cv::COLOR_GRAY2BGR);
 
-        // Рисуем контуры красным
-        cv::drawContours(contours_img, contours, -1, cv::Scalar(0, 0, 255), 1);
+        // 🔴 Контуры пор (по инверсии)
+        cv::Mat inv_binary;
+        cv::threshold(slices[i], inv_binary, 127, 255, cv::THRESH_BINARY_INV);
+        std::vector<std::vector<cv::Point>> pore_contours;
+        cv::findContours(inv_binary, pore_contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+        cv::drawContours(contours_img, pore_contours, -1, cv::Scalar(0, 0, 255), 1); // красный
 
-        // Вставляем в коллаж
+        if (is_disconnected_case) {
+            // 🔵 Контуры тел (если это cubeWithDisconnectedBodies)
+            cv::Mat body_binary;
+            cv::threshold(slices[i], body_binary, 127, 255, cv::THRESH_BINARY);
+            std::vector<std::vector<cv::Point>> body_contours;
+            cv::findContours(body_binary, body_contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+            cv::drawContours(contours_img, body_contours, -1, cv::Scalar(255, 0, 0), 1); // синий
+        }
+
         cv::Rect roi(x, y, slice_size, slice_size);
         contours_img.copyTo(collage(roi));
 
-        // Границы между слайдами (чёрные линии)
+        // Границы между слайдами
         if (col < cols - 1) {
             cv::line(collage,
                      cv::Point(x + slice_size, y),
@@ -269,8 +278,9 @@ void createBorderedCollageWithContours(const std::vector<cv::Mat>& slices,
     std::string output_path = out_dir + folder_name + "_collage_with_contours.png";
     cv::imwrite(output_path, collage);
 
-    std::cout << "\nКоллаж с границами пор сохранён в: " << output_path << std::endl;
+    std::cout << "\nКоллаж с границами сохранён в: " << output_path << std::endl;
 }
+
 
 
 void detectFloatingIslands(const std::vector<cv::Mat>& volume, uchar body_value, int min_area) {
@@ -303,7 +313,7 @@ bool isInside(int z, int y, int x, int D, int H, int W) {
     return z >= 0 && z < D && y >= 0 && y < H && x >= 0 && x < W;
 }
 
-void detectFloatingIslands3D(const std::vector<cv::Mat>& volume, uchar body_value, int min_voxels) {
+int detectFloatingIslands3D(const std::vector<cv::Mat>& volume, uchar body_value, int min_voxels) {
     const int D = volume.size();
     const int H = volume[0].rows;
     const int W = volume[0].cols;
@@ -312,7 +322,6 @@ void detectFloatingIslands3D(const std::vector<cv::Mat>& volume, uchar body_valu
     int current_label = 1;
 
     std::map<int, std::vector<Vec3>> label_voxels;
-    std::set<int> touches_base;
 
     const std::vector<Vec3> directions = {
             {0, 0, 1}, {0, 0, -1}, {0, 1, 0}, {0, -1, 0},
@@ -344,14 +353,19 @@ void detectFloatingIslands3D(const std::vector<cv::Mat>& volume, uchar body_valu
                             }
                         }
                     }
-
                     current_label++;
                 }
             }
         }
     }
 
-    for (const auto& [label, voxels] : label_voxels) {
+    int floating_count = 0;
+
+    // Используем обычный цикл без structured bindings для совместимости
+    for (const auto& pair : label_voxels) {
+        int label = pair.first;
+        const auto& voxels = pair.second;
+
         bool touches_z0 = false;
         for (const auto& v : voxels) {
             if (v.z == 0) {
@@ -363,6 +377,86 @@ void detectFloatingIslands3D(const std::vector<cv::Mat>& volume, uchar body_valu
         if (!touches_z0 && voxels.size() >= static_cast<size_t>(min_voxels)) {
             std::cout << "Обнаружены висячие участки в объёме: " << label
                       << " – Объём: " << voxels.size() << " вокселей" << std::endl;
+            floating_count++;
         }
     }
+
+    return floating_count;
+}
+
+void compareWithReferenceMetrics(const std::string& cube_name, bool is_connected, const PorosityStats& stats, int floating_3d_count) {
+    std::ifstream in("../src/reference_metrics.json");
+    if (!in) {
+        std::cerr << "❌ Не удалось открыть reference_metrics.json" << std::endl;
+        return;
+    }
+
+    nlohmann::json ref;
+    in >> ref;
+
+    if (!ref.contains(cube_name)) {
+        std::cerr << "⚠️ Нет эталонных метрик для фигуры: " << cube_name << std::endl;
+        return;
+    }
+
+    auto j = ref[cube_name];
+
+    int internal_pores_ref = j.value("internal_pores", 0);
+    int floating_parts_ref = j.value("floating_parts", 0);
+    bool connected_ref = j.value("connected", false);
+    double porosity_ref = j.value("porosity", -1.0);
+
+    double porosity_diff = std::abs(stats.porosity - porosity_ref);
+    bool porosity_match = (porosity_ref >= 0.0 && porosity_diff <= 0.001);
+    bool connected_match = (is_connected == connected_ref);
+    bool internal_pores_match = (stats.pore_count == internal_pores_ref);
+    bool floating_parts_match = (floating_3d_count == floating_parts_ref);
+
+    bool all_ok = porosity_match && connected_match && internal_pores_match && floating_parts_match;
+
+    // === Печать в консоль ===
+    std::cout << "\n🔎 Сравнение с эталонными метриками:\n";
+    std::cout << "• Связность: " << (connected_match ? "✅" : "❌")
+              << " (ожидалось: " << (connected_ref ? "да" : "нет") << ")\n";
+    if (porosity_ref >= 0.0) {
+        std::cout << "• Пористость: " << stats.porosity
+                  << " (ожидалось: " << porosity_ref << ") "
+                  << (porosity_match ? "✅" : "❌")
+                  << " (Δ = " << porosity_diff << ")\n";
+    } else {
+        std::cout << "• Пористость: " << stats.porosity << " (эталон отсутствует) ⚠️\n";
+    }
+    std::cout << "• Внутренних пор: " << stats.pore_count
+              << " (ожидалось: " << internal_pores_ref << ") "
+              << (internal_pores_match ? "✅" : "❌") << "\n";
+    std::cout << "• Висячих тел: " << floating_3d_count
+              << " (ожидалось: " << floating_parts_ref << ") "
+              << (floating_parts_match ? "✅" : "❌") << "\n";
+
+    // === Сохраняем в JSON ===
+    nlohmann::json result;
+    std::ifstream comp_in("../data/output/results/" + cube_name + "_result.json");
+    if (comp_in) {
+        comp_in >> result;
+        comp_in.close();
+    }
+
+    result[cube_name] = {
+            {"matches", all_ok},
+            {"connected_match", connected_match},
+            {"porosity_match", porosity_match},
+            {"porosity_diff", porosity_diff},
+            {"internal_pores_match", internal_pores_match},
+            {"floating_parts_match", floating_parts_match},
+            {"actual", {
+                                {"connected", is_connected},
+                                {"porosity", stats.porosity},
+                                {"internal_pores", stats.pore_count},
+                                {"floating_parts", floating_3d_count}
+                        }}
+    };
+
+    std::string output_path = "../data/output/results/" + cube_name + "_result.json";
+    std::ofstream out(output_path);
+    out << std::setw(4) << result << std::endl;
 }

@@ -1,0 +1,16 @@
+{
+    "cube_noise": {
+        "actual": {
+            "connected": true,
+            "floating_parts": 0,
+            "internal_pores": 985,
+            "porosity": 0.009952
+        },
+        "connected_match": true,
+        "floating_parts_match": true,
+        "internal_pores_match": false,
+        "matches": false,
+        "porosity_diff": 0.0,
+        "porosity_match": true
+    }
+}

@@ -1,0 +1,50 @@
+{
+    "single_hole": {
+        "connected": true,
+        "floating_parts": 0,
+        "internal_pores": 1,
+        "porosity": 0.016872
+    },
+    "disconnected_bodies": {
+        "connected": false,
+        "floating_parts": 2,
+        "internal_pores": 0,
+        "porosity": 0.972352
+    },
+    "hanging_stone": {
+        "connected": true,
+        "floating_parts": 1,
+        "internal_pores": 1,
+        "porosity": 0.010368
+    },
+    "multiple_holes": {
+        "connected": true,
+        "floating_parts": 0,
+        "internal_pores": 5,
+        "porosity": 0.037
+    },
+    "cube_noise": {
+        "connected": true,
+        "floating_parts": 0,
+        "internal_pores": 983,
+        "porosity": 0.009952
+    },
+    "solid_cube": {
+        "connected": true,
+        "floating_parts": 0,
+        "internal_pores": 0,
+        "porosity": 0.0
+    },
+    "thin_bridge": {
+        "connected": true,
+        "floating_parts": 0,
+        "internal_pores": 1,
+        "porosity": 0.031152
+    },
+    "z_gap": {
+        "connected": false,
+        "floating_parts": 0,
+        "internal_pores": 0,
+        "porosity": 0.04
+    }
+}
